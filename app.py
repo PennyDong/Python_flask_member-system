@@ -1,5 +1,6 @@
 import pymongo
-from flask import *
+from flask import*
+
 client=pymongo.MongoClient(
     "mongodb+srv://milk:milk0000@milkteam.vyzjimd.mongodb.net/?retryWrites=true&w=majority"
 )
@@ -20,25 +21,27 @@ def index():
 
 @app.route("/member")
 def member():
-    return render_template("member.html")
-
+    if "nickname" in session:
+        return render_template("member.html")
+    else:
+        return redirect("/")
 @app.route("/err")
 def err():
     message=request.args.get("msg","發生錯誤")
     return render_template("err.html",message=message)
 
-@app.route("/signup", methods=["POST"])
+@app.route('/signup' , methods=["POST"])
 def signup():
     nickname=request.form["nickname"]
     email=request.form["email"]
     password=request.form["password"]
-
+    print("ok")
     collection=db.member_system
 
     result=collection.find_one({
         "email":email
     })
-
+    #print("no ok")
     if result !=None:
         return redirect("/err?msg=信箱已被註冊過")
 
@@ -47,8 +50,9 @@ def signup():
         "email":email,
         "password":password
     })
-    
-    return redirect("/index")
+    #print("ok")
+    return redirect("http://127.0.0.1:3000/")
+
 
 @app.route("/signin", methods=["POST"])
 def signin():
@@ -65,4 +69,13 @@ def signin():
     })
     if result==None:
         return redirect("/err?msg=帳號或密碼輸入錯誤")
+    session["nickname"]=result["nickname"]
+    return redirect("member")
+
+@app.route("/signout")
+def signput():
+    #移除 session 中的會員資訊
+    del session["nickname"]
+    return redirect("/")
+    
 app.run(port=3000)
